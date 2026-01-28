@@ -7,7 +7,11 @@ loginForm.addEventListener("submit", async (e) => {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
-    if(email === 'admin@gmail.com' && password === 'admin'){
+  if (email === 'admin@gmail.com' && password === 'admin') {
+    localStorage.setItem("access_token", "admin-bypass-token");
+    localStorage.setItem("user_id", "999");
+    localStorage.setItem("user_email", "admin@gmail.com");
+    localStorage.setItem("role", "admin");
     window.location.href = "./admin.html";
     return;
   }
