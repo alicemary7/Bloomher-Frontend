@@ -108,7 +108,7 @@ async function removeCartItem(productId, askConfirmation = true) {
         if (response.ok) {
             await fetchCartItems();
         } else {
-            alert("Failed to remove item.");
+            showToast("Failed to remove item.", "error");
         }
     } catch (error) {
         console.error("Error removing item:", error);

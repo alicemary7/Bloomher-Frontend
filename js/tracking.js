@@ -59,7 +59,7 @@ function init() {
 async function handleSearch() {
     const orderIds = orderIdInput.value.trim();
     if (!orderIds) {
-        alert("Please enter an Order ID");
+        showToast("Please enter an Order ID", "info");
         return;
     }
 
@@ -95,7 +95,7 @@ async function handleSearch() {
 
     } catch (err) {
         console.error("Tracking Error:", err);
-        alert(err.message || "Error tracking order");
+        showToast(err.message || "Error tracking order", "error");
         trackingContent.style.display = "none";
     } finally {
         searchBtn.textContent = "Track";

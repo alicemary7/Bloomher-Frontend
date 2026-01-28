@@ -88,7 +88,7 @@ async function fetchProductDetails() {
 // COMMAND: Add to Cart - Saves item to cart via API
 async function addToCart() {
   if (!userId) {
-    alert("Please login first!");
+    showToast("Please login first!", "info");
     window.location.href = "./login.html";
     return;
   }
@@ -110,24 +110,24 @@ async function addToCart() {
     });
 
     if (response.ok) {
-      alert("Added to cart successfully!");
+      showToast("Added to cart successfully!", "success");
     } else if (response.status === 401) {
-      alert("Session expired. Please login again.");
+      showToast("Session expired. Please login again.", "error");
       window.location.href = "./login.html";
     } else {
       const errorData = await response.json();
-      alert("Failed to add to cart: " + (errorData.detail || "Unknown error"));
+      showToast("Failed to add to cart: " + (errorData.detail || "Unknown error"), "error");
     }
   } catch (error) {
     console.error("Network Error:", error);
-    alert("Server error. Could not add to cart.");
+    showToast("Server error. Could not add to cart.", "error");
   }
 }
 
 // COMMAND: Buy Now - LocalStorage prep and checkout redirect
 async function buyNow() {
   if (!userId) {
-    alert("Please login first!");
+    showToast("Please login first!", "info");
     window.location.href = "./login.html";
     return;
   }

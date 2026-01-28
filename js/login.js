@@ -17,7 +17,7 @@ loginForm.addEventListener("submit", async (e) => {
   }
 
   if (!email || !password) {
-    alert("Enter email and password");
+    showToast("Please enter email and password", "error");
     return;
   }
 
@@ -39,7 +39,7 @@ loginForm.addEventListener("submit", async (e) => {
     localStorage.setItem("user_email", data.email);
     localStorage.setItem("role", data.role);
 
-    alert("Login successful");
+    showToast("Login successful! Welcome back.", "success");
 
     if (data.role === "admin") {
       window.location.href = "./admin.html";
@@ -48,6 +48,6 @@ loginForm.addEventListener("submit", async (e) => {
     }
   } catch (error) {
     console.error(error);
-    alert(error.message || "Server error");
+    showToast(error.message || "Server error", "error");
   }
 });

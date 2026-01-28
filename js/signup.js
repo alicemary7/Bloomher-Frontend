@@ -11,12 +11,12 @@ signupForm.addEventListener("submit", async (e) => {
   const terms = document.getElementById("terms").checked;
 
   if (password !== confirmPassword) {
-    alert("Passwords don't match");
+    showToast("Passwords don't match", "error");
     return;
   }
 
   if (!terms) {
-    alert("Please accept the Terms & Conditions");
+    showToast("Please accept the Terms & Conditions", "error");
     return;
   }
 
@@ -32,10 +32,10 @@ signupForm.addEventListener("submit", async (e) => {
       throw new Error(data.detail || "Signup failed");
     }
 
-    alert("Signup successful! Redirecting to login...");
+    showToast("Signup successful! Redirecting to login...", "success");
     window.location.href = "./login.html";
   } catch (error) {
     console.error(error);
-    alert(error.message || "Server error");
+    showToast(error.message || "Server error", "error");
   }
 });

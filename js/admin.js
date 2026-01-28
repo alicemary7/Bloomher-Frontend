@@ -3,7 +3,7 @@ const userRole = localStorage.getItem("role");
 const token = localStorage.getItem("access_token");
 
 if (userRole !== "admin") {
-  alert("Access Denied! Admins only.");
+  showToast("Access Denied! Admins only.", "error");
   window.location.href = "../index.html";
 }
 
@@ -261,20 +261,21 @@ async function handleAddProduct(e) {
     });
 
     if (response.ok) {
-      alert(` Product ${pId ? "updated" : "added"} successfully!`);
+      showToast(` Product ${pId ? "updated" : "added"} successfully!`, "success");
       document.getElementById("addProductForm").reset();
       toggleProductForm();
       fetchProducts(); // Refresh list
     } else {
       const error = await response.json();
-      alert(
+      showToast(
         ` Failed to ${pId ? "update" : "add"} product: ` +
         (error.detail || "Unknown error"),
+        "error"
       );
     }
   } catch (err) {
     console.error("Error processing product:", err);
-    alert(" Server connection error!");
+    showToast(" Server connection error!", "error");
   }
 }
 
@@ -339,15 +340,15 @@ async function updateOrderStatus(orderId, newStatus) {
     );
 
     if (response.ok) {
-      alert(`Order #${orderId} status updated to ${newStatus}`);
+      showToast(`Order #${orderId} status updated to ${newStatus}`, "success");
       fetchOrders(); // Refresh orders table
       refreshDashboard(); // Update dashboard stats
     } else {
       const error = await response.json();
-      alert("Failed to update status: " + (error.detail || "Unknown error"));
+      showToast("Failed to update status: " + (error.detail || "Unknown error"), "error");
     }
   } catch (err) {
     console.error("Update status failed:", err);
-    alert("Server connection error!");
+    showToast("Server connection error!", "error");
   }
 }
