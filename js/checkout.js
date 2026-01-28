@@ -1,0 +1,268 @@
+const ORDER_API_URL = "http://127.0.0.1:8000/orders";
+const PAYMENT_API_URL = "http://127.0.0.1:8000/payments";
+
+const placeOrderBtn = document.querySelector(".place-order-btn");
+const userId = localStorage.getItem("user_id");
+const token = localStorage.getItem("access_token");
+
+const productNameEl = document.getElementById("product-name");
+const productSizeEl = document.getElementById("product-size");
+const productPriceEl = document.getElementById("product-price");
+const productQuantityEl = document.getElementById("product-quantity");
+const orderSubtotalEl = document.getElementById("order-subtotal");
+const orderShippingEl = document.getElementById("order-shipping");
+const orderTotalEl = document.getElementById("order-total");
+
+const orderItemsList = document.getElementById("order-items-list");
+let selectedProduct = null;
+
+// COMMAND: Init Page - Checks checkout mode and setup
+async function init() {
+  const checkoutMode = localStorage.getItem("checkoutMode");
+  const storedProduct = localStorage.getItem("selectedProduct");
+
+  if (checkoutMode === "cart") {
+    await renderCartSummary();
+  } else if (storedProduct) {
+    selectedProduct = JSON.parse(storedProduct);
+    renderOrderSummary();
+  } else {
+    productNameEl.textContent = "No items selected";
+  }
+
+  setupPaymentToggle();
+}
+
+// COMMAND: setupPaymentToggle - Show/Hide card details
+function setupPaymentToggle() {
+  const paymentInputs = document.querySelectorAll('input[name="payment"]');
+  const cardDetails = document.getElementById("cardDetails");
+
+  paymentInputs.forEach((input) => {
+    input.addEventListener("change", (e) => {
+      if (e.target.value === "card") {
+        cardDetails.classList.add("active");
+      } else {
+        cardDetails.classList.remove("active");
+      }
+    });
+  });
+}
+
+// COMMAND: renderCartSummary - Builds cart items summary
+async function renderCartSummary() {
+  if (!userId) return;
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const items = await res.json();
+
+    if (items.length === 0) {
+      alert("Your cart is empty! Redirecting to cart page...");
+      window.location.href = "./card.html";
+      return;
+    }
+
+    orderItemsList.innerHTML = "";
+    let subtotal = 0;
+
+    items.forEach((item) => {
+      const product = item.product;
+      const itemTotal = product.price * item.quantity;
+      subtotal += itemTotal;
+
+      const itemRow = document.createElement("div");
+      itemRow.classList.add("item-row");
+      itemRow.style.marginBottom = "15px";
+      itemRow.innerHTML = `
+        <div>
+          <div style="font-weight: 600;">${product.name}</div>
+          <div style="font-size: 0.9rem; color: #666">${product.size || "Organic Cotton"}</div>
+          <div style="font-size: 0.8rem; color: #888">Qty: ${item.quantity}</div>
+        </div>
+        <div style="font-weight: 600;">₹${itemTotal}</div>
+      `;
+      orderItemsList.appendChild(itemRow);
+    });
+
+    const total = subtotal;
+    if (orderSubtotalEl) orderSubtotalEl.textContent = `₹${subtotal}`;
+    if (orderShippingEl) orderShippingEl.textContent = "FREE";
+    orderTotalEl.textContent = `₹${total}`;
+  } catch (err) {
+    console.error("Error loading cart for checkout:", err);
+    productNameEl.textContent = "Error loading order items";
+  }
+}
+
+// COMMAND: renderOrderSummary - Builds single product summary
+function renderOrderSummary() {
+  if (!selectedProduct) return;
+
+  productNameEl.textContent = selectedProduct.name;
+  productSizeEl.textContent = selectedProduct.selectedSize || "Organic Cotton";
+  productPriceEl.textContent = `₹${selectedProduct.price * selectedProduct.quantity}`;
+  if (productQuantityEl)
+    productQuantityEl.textContent = `Qty: ${selectedProduct.quantity}`;
+
+  const subtotal = selectedProduct.price * selectedProduct.quantity;
+  const total = subtotal;
+
+  if (orderSubtotalEl) orderSubtotalEl.textContent = `₹${subtotal}`;
+  if (orderShippingEl) orderShippingEl.textContent = "FREE";
+  orderTotalEl.textContent = `₹${total}`;
+}
+
+placeOrderBtn.addEventListener("click", async () => {
+  if (!validateForm()) return;
+  if (!userId) {
+    alert("Please login to complete your order.");
+    window.location.href = "./login.html";
+    return;
+  }
+
+  const checkoutMode = localStorage.getItem("checkoutMode");
+  if (checkoutMode === "cart") {
+    await createCartOrder();
+  } else {
+    await createOrder();
+  }
+});
+
+// COMMAND: validateForm - Check required checkout fields
+function validateForm() {
+  const fields = ["name", "email", "address", "city", "state", "zip"];
+  for (let f of fields) {
+    if (!document.getElementById(f).value.trim()) {
+      alert(`Please enter your ${f}`);
+      return false;
+    }
+  }
+
+  const paymentMethodInput = document.querySelector(
+    'input[name="payment"]:checked',
+  );
+  const paymentMethod = paymentMethodInput ? paymentMethodInput.value : "card";
+
+  if (paymentMethod === "card") {
+    const cardFields = ["cardNumber", "expiry", "cvv", "cardName"];
+    for (let f of cardFields) {
+      const el = document.getElementById(f);
+      if (!el || !el.value.trim()) {
+        alert(
+          `Please enter your ${f.replace(/([A-Z])/g, " $1").toLowerCase()} 🌷`,
+        );
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// COMMAND: createOrder - Place single product order
+async function createOrder() {
+  try {
+    const response = await fetch(`${ORDER_API_URL}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        product_id: selectedProduct.id,
+        quantity: selectedProduct.quantity,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Order creation failed");
+    const order = await response.json();
+    await processPayment(order.id);
+  } catch (error) {
+    console.error("Order Error:", error);
+    alert("Failed to place order. " + error.message);
+  }
+}
+
+// COMMAND: createCartOrder - Loop and place all cart orders
+async function createCartOrder() {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const items = await res.json();
+
+    if (items.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
+    const orderPromises = items.map((item) => {
+      return fetch(`${ORDER_API_URL}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        }),
+      }).then((r) => r.json());
+    });
+
+    const orders = await Promise.all(orderPromises);
+
+    for (const order of orders) {
+      await processPayment(order.id, true);
+    }
+
+    const orderIds = orders.map((o) => o.id).join(",");
+    alert("Order placed successfully! ");
+    localStorage.removeItem("selectedProduct");
+    localStorage.removeItem("checkoutMode");
+    localStorage.removeItem("cartTotal");
+    window.location.href = `./tracking.html?order_id=${orderIds}`;
+  } catch (err) {
+    console.error(err);
+    alert("Error processing cart order: " + err.message);
+  }
+}
+
+// COMMAND: processPayment - Handle API payment transaction
+async function processPayment(orderId, silent = false) {
+  const paymentMethodInput = document.querySelector(
+    'input[name="payment"]:checked',
+  );
+  const paymentMethod = paymentMethodInput ? paymentMethodInput.value : "card";
+
+  try {
+    const res = await fetch(`${PAYMENT_API_URL}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        order_id: orderId,
+        payment_method: paymentMethod,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Payment failed");
+
+    if (!silent) {
+      alert("Order placed successfully! ");
+      localStorage.removeItem("selectedProduct");
+      localStorage.removeItem("checkoutMode");
+      localStorage.removeItem("cartTotal");
+      window.location.href = `./tracking.html?order_id=${orderId}`;
+    }
+  } catch (err) {
+    console.error("Payment Error:", err);
+    if (!silent) alert("Payment processing failed.");
+  }
+}
+
+init();
+
+// Start
+init();
