@@ -1,5 +1,5 @@
-const ORDER_API_URL = "http://127.0.0.1:8000/orders";
-const PAYMENT_API_URL = "http://127.0.0.1:8000/payments";
+const ORDER_API_URL = `${window.API_BASE_URL}/orders`;
+const PAYMENT_API_URL = `${window.API_BASE_URL}/payments`;
 
 const placeOrderBtn = document.querySelector(".place-order-btn");
 const userId = localStorage.getItem("user_id");
@@ -54,13 +54,13 @@ async function renderCartSummary() {
   if (!userId) return;
 
   try {
-    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
 
     if (items.length === 0) {
-      alert("Your cart is empty! Redirecting to cart page...");
+      showToast("Your cart is empty! Redirecting to cart page...", "info");
       window.location.href = "./card.html";
       return;
     }
@@ -79,7 +79,7 @@ async function renderCartSummary() {
       itemRow.innerHTML = `
         <div>
           <div style="font-weight: 600;">${product.name}</div>
-          <div style="font-size: 0.9rem; color: #666">${product.size || "Organic Cotton"}</div>
+          <div style="font-size: 0.9rem; color: #666">${item.size || "Regular"}</div>
           <div style="font-size: 0.8rem; color: #888">Qty: ${item.quantity}</div>
         </div>
         <div style="font-weight: 600;">₹${itemTotal}</div>
@@ -102,7 +102,7 @@ function renderOrderSummary() {
   if (!selectedProduct) return;
 
   productNameEl.textContent = selectedProduct.name;
-  productSizeEl.textContent = selectedProduct.selectedSize || "Organic Cotton";
+  productSizeEl.textContent = selectedProduct.selectedSize || "Regular";
   productPriceEl.textContent = `₹${selectedProduct.price * selectedProduct.quantity}`;
   if (productQuantityEl)
     productQuantityEl.textContent = `Qty: ${selectedProduct.quantity}`;
@@ -118,7 +118,7 @@ function renderOrderSummary() {
 placeOrderBtn.addEventListener("click", async () => {
   if (!validateForm()) return;
   if (!userId) {
-    alert("Please login to complete your order.");
+    showToast("Please login to complete your order.", "info");
     window.location.href = "./login.html";
     return;
   }
@@ -136,7 +136,7 @@ function validateForm() {
   const fields = ["name", "email", "address", "city", "state", "zip"];
   for (let f of fields) {
     if (!document.getElementById(f).value.trim()) {
-      alert(`Please enter your ${f}`);
+      showToast(`Please enter your ${f}`, "error");
       return false;
     }
   }
@@ -151,8 +151,9 @@ function validateForm() {
     for (let f of cardFields) {
       const el = document.getElementById(f);
       if (!el || !el.value.trim()) {
-        alert(
+        showToast(
           `Please enter your ${f.replace(/([A-Z])/g, " $1").toLowerCase()} 🌷`,
+          "error"
         );
         return false;
       }
@@ -173,6 +174,7 @@ async function createOrder() {
       body: JSON.stringify({
         product_id: selectedProduct.id,
         quantity: selectedProduct.quantity,
+        size: selectedProduct.selectedSize || "Regular"
       }),
     });
 
@@ -181,20 +183,20 @@ async function createOrder() {
     await processPayment(order.id);
   } catch (error) {
     console.error("Order Error:", error);
-    alert("Failed to place order. " + error.message);
+    showToast("Failed to place order. " + error.message, "error");
   }
 }
 
 // COMMAND: createCartOrder - Loop and place all cart orders
 async function createCartOrder() {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
 
     if (items.length === 0) {
-      alert("Your cart is empty!");
+      showToast("Your cart is empty!", "info");
       return;
     }
 
@@ -208,6 +210,7 @@ async function createCartOrder() {
         body: JSON.stringify({
           product_id: item.product_id,
           quantity: item.quantity,
+          size: item.size || "Regular"
         }),
       }).then((r) => r.json());
     });
@@ -219,14 +222,14 @@ async function createCartOrder() {
     }
 
     const orderIds = orders.map((o) => o.id).join(",");
-    alert("Order placed successfully! ");
+    showToast("Order placed successfully! ", "success");
     localStorage.removeItem("selectedProduct");
     localStorage.removeItem("checkoutMode");
     localStorage.removeItem("cartTotal");
     window.location.href = `./tracking.html?order_id=${orderIds}`;
   } catch (err) {
     console.error(err);
-    alert("Error processing cart order: " + err.message);
+    showToast("Error processing cart order: " + err.message, "error");
   }
 }
 
@@ -250,7 +253,7 @@ async function processPayment(orderId, silent = false) {
     if (!res.ok) throw new Error("Payment failed");
 
     if (!silent) {
-      alert("Order placed successfully! ");
+      showToast("Order placed successfully! ", "success");
       localStorage.removeItem("selectedProduct");
       localStorage.removeItem("checkoutMode");
       localStorage.removeItem("cartTotal");
@@ -258,7 +261,7 @@ async function processPayment(orderId, silent = false) {
     }
   } catch (err) {
     console.error("Payment Error:", err);
-    if (!silent) alert("Payment processing failed.");
+    if (!silent) showToast("Payment processing failed.", "error");
   }
 }
 

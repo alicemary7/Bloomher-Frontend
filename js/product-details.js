@@ -1,5 +1,5 @@
-const CART_API_URL = "http://127.0.0.1:8000/cart";
-const PRODUCT_API_URL = "http://127.0.0.1:8000/products";
+const CART_API_URL = `${window.API_BASE_URL}/cart`;
+const PRODUCT_API_URL = `${window.API_BASE_URL}/products`;
 const userId = localStorage.getItem("user_id");
 const token = localStorage.getItem("access_token");
 
@@ -88,7 +88,7 @@ async function fetchProductDetails() {
 // COMMAND: Add to Cart - Saves item to cart via API
 async function addToCart() {
   if (!userId) {
-    alert("Please login first!");
+    showToast("Please login first!", "info");
     window.location.href = "./login.html";
     return;
   }
@@ -99,6 +99,8 @@ async function addToCart() {
     quantityInput.value = 98;
   }
 
+  const selectedSize = document.querySelector('input[name="size"]:checked')?.value || "Regular";
+
   try {
     const response = await fetch(`${CART_API_URL}/`, {
       method: "POST",
@@ -106,28 +108,32 @@ async function addToCart() {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ product_id: parseInt(productId), quantity }),
+      body: JSON.stringify({
+        product_id: parseInt(productId),
+        quantity,
+        size: selectedSize
+      }),
     });
 
     if (response.ok) {
-      alert("Added to cart successfully!");
+      showToast("Added to cart successfully!", "success");
     } else if (response.status === 401) {
-      alert("Session expired. Please login again.");
+      showToast("Session expired. Please login again.", "error");
       window.location.href = "./login.html";
     } else {
       const errorData = await response.json();
-      alert("Failed to add to cart: " + (errorData.detail || "Unknown error"));
+      showToast("Failed to add to cart: " + (errorData.detail || "Unknown error"), "error");
     }
   } catch (error) {
     console.error("Network Error:", error);
-    alert("Server error. Could not add to cart.");
+    showToast("Server error. Could not add to cart.", "error");
   }
 }
 
 // COMMAND: Buy Now - LocalStorage prep and checkout redirect
 async function buyNow() {
   if (!userId) {
-    alert("Please login first!");
+    showToast("Please login first!", "info");
     window.location.href = "./login.html";
     return;
   }

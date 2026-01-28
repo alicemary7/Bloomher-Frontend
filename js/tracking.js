@@ -1,4 +1,4 @@
-const ORDER_API_URL = "http://127.0.0.1:8000/orders";
+const ORDER_API_URL = `${window.API_BASE_URL}/orders`;
 const token = localStorage.getItem("access_token");
 
 // UI Elements
@@ -59,7 +59,7 @@ function init() {
 async function handleSearch() {
     const orderIds = orderIdInput.value.trim();
     if (!orderIds) {
-        alert("Please enter an Order ID");
+        showToast("Please enter an Order ID", "info");
         return;
     }
 
@@ -95,7 +95,7 @@ async function handleSearch() {
 
     } catch (err) {
         console.error("Tracking Error:", err);
-        alert(err.message || "Error tracking order");
+        showToast(err.message || "Error tracking order", "error");
         trackingContent.style.display = "none";
     } finally {
         searchBtn.textContent = "Track";
@@ -120,7 +120,7 @@ function renderOrdersSummary(orders) {
         itemEl.innerHTML = `
       <div>
         <div style="font-weight: 600; color: var(--primary);">${order.product?.name || "Product info unavailable"}</div>
-        <div style="font-size: 0.85rem; color: #666;">Qty: ${order.quantity}</div>
+        <div style="font-size: 0.85rem; color: #666;">Size: ${order.size || "Regular"} | Qty: ${order.quantity}</div>
       </div>
       <div style="font-weight: 600;">₹${itemSubtotal}</div>
     `;

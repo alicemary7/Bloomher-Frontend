@@ -1,5 +1,5 @@
-const API_URL = "http://127.0.0.1:8000/products";
-const CART_API_URL = "http://127.0.0.1:8000/cart";
+const API_URL = `${window.API_BASE_URL}/products`;
+const CART_API_URL = `${window.API_BASE_URL}/cart`;
 const productsGrid = document.querySelector(".products-grid");
 
 const userId = localStorage.getItem("user_id");
@@ -64,7 +64,7 @@ async function fetchProducts() {
 // COMMAND: Add to Cart - Saves product to user's cart
 async function addToCart(productId) {
   if (!userId) {
-    alert("Please login to add items to cart!");
+    showToast("Please login to add items to cart!", "info");
     window.location.href = "./login.html";
     return;
   }
@@ -81,24 +81,24 @@ async function addToCart(productId) {
 
     if (!response.ok) {
       if (response.status === 401) {
-        alert("Session expired. Please login again.");
+        showToast("Session expired. Please login again.", "error");
         window.location.href = "./login.html";
         return;
       }
       throw new Error("Failed to add to cart");
     }
 
-    alert("Item added to cart successfully!");
+    showToast("Item added to cart successfully!", "success");
   } catch (error) {
     console.error("Error adding to cart:", error);
-    alert("Failed to add item to cart.");
+    showToast("Failed to add item to cart.", "error");
   }
 }
 
 // COMMAND: Buy Now - Direct checkout for a single product
 async function buyNow(productId) {
   if (!userId) {
-    alert("Please login first!");
+    showToast("Please login first!", "info");
     window.location.href = "./login.html";
     return;
   }

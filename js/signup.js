@@ -11,17 +11,17 @@ signupForm.addEventListener("submit", async (e) => {
   const terms = document.getElementById("terms").checked;
 
   if (password !== confirmPassword) {
-    alert("Passwords don't match");
+    showToast("Passwords don't match", "error");
     return;
   }
 
   if (!terms) {
-    alert("Please accept the Terms & Conditions");
+    showToast("Please accept the Terms & Conditions", "error");
     return;
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/users/signup", {
+    const response = await fetch(`${window.API_BASE_URL}/users/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -32,10 +32,10 @@ signupForm.addEventListener("submit", async (e) => {
       throw new Error(data.detail || "Signup failed");
     }
 
-    alert("Signup successful! Redirecting to login...");
+    showToast("Signup successful! Redirecting to login...", "success");
     window.location.href = "./login.html";
   } catch (error) {
     console.error(error);
-    alert(error.message || "Server error");
+    showToast(error.message || "Server error", "error");
   }
 });
