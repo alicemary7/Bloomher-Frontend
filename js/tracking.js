@@ -120,7 +120,7 @@ function renderOrdersSummary(orders) {
         itemEl.innerHTML = `
       <div>
         <div style="font-weight: 600; color: var(--primary);">${order.product?.name || "Product info unavailable"}</div>
-        <div style="font-size: 0.85rem; color: #666;">Qty: ${order.quantity}</div>
+        <div style="font-size: 0.85rem; color: #666;">Size: ${order.size || "Regular"} | Qty: ${order.quantity}</div>
       </div>
       <div style="font-weight: 600;">₹${itemSubtotal}</div>
     `;

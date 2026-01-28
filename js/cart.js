@@ -53,7 +53,7 @@ function renderCartItems(cartItems) {
       </div>
       <div class="item-details">
         <div class="item-name">${product.name}</div>
-        <div class="item-size">${product.size || 'Organic Cotton'}</div>
+        <div class="item-size">${item.size || 'Regular'}</div>
       </div>
       <div class="item-actions">
         <div class="item-price">₹<span class="item-price-value">${product.price}</span></div>
@@ -120,7 +120,7 @@ function proceedToCheckout() {
     const subtotalAmount = parseFloat(subtotalEl.innerText) || 0;
     localStorage.setItem("checkoutMode", "cart");
     localStorage.setItem("cartTotal", subtotalAmount);
-    // localStorage.removeItem("selectedProduct");
+    localStorage.removeItem("selectedProduct");
     window.location.href = "./address.html";
 }
 

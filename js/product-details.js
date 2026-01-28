@@ -99,6 +99,8 @@ async function addToCart() {
     quantityInput.value = 98;
   }
 
+  const selectedSize = document.querySelector('input[name="size"]:checked')?.value || "Regular";
+
   try {
     const response = await fetch(`${CART_API_URL}/`, {
       method: "POST",
@@ -106,7 +108,11 @@ async function addToCart() {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ product_id: parseInt(productId), quantity }),
+      body: JSON.stringify({
+        product_id: parseInt(productId),
+        quantity,
+        size: selectedSize
+      }),
     });
 
     if (response.ok) {

@@ -79,7 +79,7 @@ async function renderCartSummary() {
       itemRow.innerHTML = `
         <div>
           <div style="font-weight: 600;">${product.name}</div>
-          <div style="font-size: 0.9rem; color: #666">${product.size || "Organic Cotton"}</div>
+          <div style="font-size: 0.9rem; color: #666">${item.size || "Regular"}</div>
           <div style="font-size: 0.8rem; color: #888">Qty: ${item.quantity}</div>
         </div>
         <div style="font-weight: 600;">₹${itemTotal}</div>
@@ -102,7 +102,7 @@ function renderOrderSummary() {
   if (!selectedProduct) return;
 
   productNameEl.textContent = selectedProduct.name;
-  productSizeEl.textContent = selectedProduct.selectedSize || "Organic Cotton";
+  productSizeEl.textContent = selectedProduct.selectedSize || "Regular";
   productPriceEl.textContent = `₹${selectedProduct.price * selectedProduct.quantity}`;
   if (productQuantityEl)
     productQuantityEl.textContent = `Qty: ${selectedProduct.quantity}`;
@@ -174,6 +174,7 @@ async function createOrder() {
       body: JSON.stringify({
         product_id: selectedProduct.id,
         quantity: selectedProduct.quantity,
+        size: selectedProduct.selectedSize || "Regular"
       }),
     });
 
@@ -209,6 +210,7 @@ async function createCartOrder() {
         body: JSON.stringify({
           product_id: item.product_id,
           quantity: item.quantity,
+          size: item.size || "Regular"
         }),
       }).then((r) => r.json());
     });
