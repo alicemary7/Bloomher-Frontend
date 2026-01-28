@@ -1,5 +1,5 @@
-const API_URL = "http://127.0.0.1:8000/products";
-const CART_API_URL = "http://127.0.0.1:8000/cart";
+const API_URL = `${window.API_BASE_URL}/products`;
+const CART_API_URL = `${window.API_BASE_URL}/cart`;
 const productsGrid = document.querySelector(".products-grid");
 
 const userId = localStorage.getItem("user_id");

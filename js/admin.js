@@ -7,7 +7,7 @@ if (userRole !== "admin") {
   window.location.href = "../index.html";
 }
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = window.API_BASE_URL;
 
 //  2. Sidebar Navigation & Initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -230,7 +230,7 @@ async function refreshDashboard() {
   }
 }
 
-// ✅ 5. Action Handlers
+//  5. Action Handlers
 
 // COMMAND: Handle Add Product - POST/PUT product data
 async function handleAddProduct(e) {
@@ -269,7 +269,7 @@ async function handleAddProduct(e) {
       const error = await response.json();
       alert(
         ` Failed to ${pId ? "update" : "add"} product: ` +
-          (error.detail || "Unknown error"),
+        (error.detail || "Unknown error"),
       );
     }
   } catch (err) {

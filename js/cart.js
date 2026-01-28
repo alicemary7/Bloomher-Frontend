@@ -1,4 +1,4 @@
-const CART_API_URL = "http://127.0.0.1:8000/cart";
+const CART_API_URL = `${window.API_BASE_URL}/cart`;
 const cartItemsContainer = document.querySelector(".cart-items");
 const subtotalEl = document.getElementById("subtotal");
 const totalEl = document.getElementById("total");

@@ -13,7 +13,7 @@ loginForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/users/login", {
+    const response = await fetch(`${window.API_BASE_URL}/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

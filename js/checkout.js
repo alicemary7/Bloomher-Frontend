@@ -1,5 +1,5 @@
-const ORDER_API_URL = "http://127.0.0.1:8000/orders";
-const PAYMENT_API_URL = "http://127.0.0.1:8000/payments";
+const ORDER_API_URL = `${window.API_BASE_URL}/orders`;
+const PAYMENT_API_URL = `${window.API_BASE_URL}/payments`;
 
 const placeOrderBtn = document.querySelector(".place-order-btn");
 const userId = localStorage.getItem("user_id");
@@ -54,7 +54,7 @@ async function renderCartSummary() {
   if (!userId) return;
 
   try {
-    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
@@ -188,7 +188,7 @@ async function createOrder() {
 // COMMAND: createCartOrder - Loop and place all cart orders
 async function createCartOrder() {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/cart/`, {
+    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
