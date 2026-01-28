@@ -230,7 +230,7 @@ async function refreshDashboard() {
   }
 }
 
-// ✅ 5. Action Handlers
+//  5. Action Handlers
 
 // COMMAND: Handle Add Product - POST/PUT product data
 async function handleAddProduct(e) {

@@ -15,13 +15,22 @@ const quantityInput = document.getElementById("productQuantity");
 const addToCartBtn = document.getElementById("addToCartBtn");
 const buyNowBtn = document.getElementById("buyNowBtn");
 
+const loadingContent = document.getElementById("loadingContent");
+const productContent = document.getElementById("productContent");
+
 // COMMAND: Fetch Product Details - UI population for details page
 async function fetchProductDetails() {
-  if (!productId) return;
+  if (!productId) {
+    if (loadingContent) loadingContent.textContent = "Error: No product ID provided.";
+    return;
+  }
 
   try {
     const res = await fetch(`${PRODUCT_API_URL}/${productId}`);
-    if (!res.ok) throw new Error("Product not found");
+    if (!res.ok) {
+      if (res.status === 404) throw new Error("Product not found");
+      throw new Error("Failed to fetch product details");
+    }
     const product = await res.json();
 
     if (productName) productName.textContent = product.name;
@@ -45,17 +54,34 @@ async function fetchProductDetails() {
 
     if (featuresBox) {
       let featuresHtml = '<h2 class="features-title">Key Features</h2>';
-      let features = (product.features && product.features.trim() !== "")
-        ? product.features.split(/\r?\n|,/).map(f => f.trim()).filter(f => f !== "")
-        : ["100% Certified Organic Cotton", "Breathable & Chemical-Free", "Ultra-Absorbent Core", "Eco-friendly & Biodegradable"];
+      let features = [];
+
+      if (Array.isArray(product.features)) {
+        features = product.features;
+      } else if (typeof product.features === 'string' && product.features.trim() !== "") {
+        features = product.features.split(/\r?\n|,/).map(f => f.trim()).filter(f => f !== "");
+      }
+
+      if (features.length === 0) {
+        features = ["100% Certified Organic Cotton", "Breathable & Chemical-Free", "Ultra-Absorbent Core", "Eco-friendly & Biodegradable"];
+      }
 
       features.forEach(f => {
         featuresHtml += `<div class="feature-item"><span class="checkmark">✓</span><span>${f}</span></div>`;
       });
       featuresBox.innerHTML = featuresHtml;
     }
+
+    // Show content and hide loading
+    if (loadingContent) loadingContent.style.display = "none";
+    if (productContent) productContent.style.display = "block";
+
   } catch (err) {
     console.error("Error loading product:", err);
+    if (loadingContent) {
+      loadingContent.style.color = "red";
+      loadingContent.textContent = "Error: " + err.message;
+    }
   }
 }
 
