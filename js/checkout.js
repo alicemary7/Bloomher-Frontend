@@ -1,10 +1,15 @@
-const ORDER_API_URL = `${window.API_BASE_URL}/orders`;
-const PAYMENT_API_URL = `${window.API_BASE_URL}/payments`;
+// Usage: Processes orders, manages payment methods, and handles the transition from cart to order placement.
 
+// Web addresses for orders and payments
+const ORDER_API_URL = `https://bloomher-backend.onrender.com/orders`;
+const PAYMENT_API_URL = `https://bloomher-backend.onrender.com/payments`;
+
+// Buttons and user information
 const placeOrderBtn = document.querySelector(".place-order-btn");
 const userId = localStorage.getItem("user_id");
 const token = localStorage.getItem("access_token");
 
+// Finding spots where we show order details
 const productNameEl = document.getElementById("product-name");
 const productSizeEl = document.getElementById("product-size");
 const productPriceEl = document.getElementById("product-price");
@@ -13,58 +18,70 @@ const orderSubtotalEl = document.getElementById("order-subtotal");
 const orderShippingEl = document.getElementById("order-shipping");
 const orderTotalEl = document.getElementById("order-total");
 
+// Finding list elements
 const orderItemsList = document.getElementById("order-items-list");
 let selectedProduct = null;
 
-// COMMAND: Init Page - Checks checkout mode and setup
+// Function that runs when the page starts to set everything up
 async function init() {
+  // Check if we are checking out a full cart or just one product
   const checkoutMode = localStorage.getItem("checkoutMode");
   const storedProduct = localStorage.getItem("selectedProduct");
 
   if (checkoutMode === "cart") {
+    // Load and show items from the full cart
     await renderCartSummary();
   } else if (storedProduct) {
+    // Load and show details for just the single "Buy Now" product
     selectedProduct = JSON.parse(storedProduct);
     renderOrderSummary();
   } else {
+    // Otherwise show no items
     productNameEl.textContent = "No items selected";
   }
 
+  // Set up the section that hides/shows card numbers
   setupPaymentToggle();
 }
 
-// COMMAND: setupPaymentToggle - Show/Hide card details
+// Function to show or hide credit card fields based on choice
 function setupPaymentToggle() {
   const paymentInputs = document.querySelectorAll('input[name="payment"]');
   const cardDetails = document.getElementById("cardDetails");
 
   paymentInputs.forEach((input) => {
+    // Watch for when the payment type changes
     input.addEventListener("change", (e) => {
+      // If "card" is selected, show the extra fields
       if (e.target.value === "card") {
         cardDetails.classList.add("active");
       } else {
+        // Otherwise hide them
         cardDetails.classList.remove("active");
       }
     });
   });
 }
 
-// COMMAND: renderCartSummary - Builds cart items summary
+// Function to get the current cart from the server and show a summary
 async function renderCartSummary() {
   if (!userId) return;
 
   try {
-    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
+    // Ask the server for the latest cart
+    const res = await fetch(`https://bloomher-backend.onrender.com/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
 
+    // If suddenly empty, send user back to cart page
     if (items.length === 0) {
-      showToast("Your cart is empty! Redirecting to cart page...", "info");
+      alert("Your cart is empty! Redirecting to cart page...");
       window.location.href = "./card.html";
       return;
     }
 
+    // Clear and redraw cart list
     orderItemsList.innerHTML = "";
     let subtotal = 0;
 
@@ -87,17 +104,18 @@ async function renderCartSummary() {
       orderItemsList.appendChild(itemRow);
     });
 
+    // Update displayed prices
     const total = subtotal;
     if (orderSubtotalEl) orderSubtotalEl.textContent = `₹${subtotal}`;
     if (orderShippingEl) orderShippingEl.textContent = "FREE";
     orderTotalEl.textContent = `₹${total}`;
   } catch (err) {
-    console.error("Error loading cart for checkout:", err);
+    // Final error message
     productNameEl.textContent = "Error loading order items";
   }
 }
 
-// COMMAND: renderOrderSummary - Builds single product summary
+// Function to show the single item if you clicked "Buy Now"
 function renderOrderSummary() {
   if (!selectedProduct) return;
 
@@ -115,14 +133,18 @@ function renderOrderSummary() {
   orderTotalEl.textContent = `₹${total}`;
 }
 
+// Watch for when the "Place Order" button is clicked
 placeOrderBtn.addEventListener("click", async () => {
+  // Check if address/fields are correctly filled
   if (!validateForm()) return;
+  // Make sure logged in
   if (!userId) {
-    showToast("Please login to complete your order.", "info");
+    alert("Please login to complete your order.");
     window.location.href = "./login.html";
     return;
   }
 
+  // Figure out if we are buying a cart or a single product
   const checkoutMode = localStorage.getItem("checkoutMode");
   if (checkoutMode === "cart") {
     await createCartOrder();
@@ -131,29 +153,30 @@ placeOrderBtn.addEventListener("click", async () => {
   }
 });
 
-// COMMAND: validateForm - Check required checkout fields
+// Function to check if name, address, zip code etc. are filled
 function validateForm() {
   const fields = ["name", "email", "address", "city", "state", "zip"];
   for (let f of fields) {
     if (!document.getElementById(f).value.trim()) {
-      showToast(`Please enter your ${f}`, "error");
+      alert(`Please enter your ${f}`);
       return false;
     }
   }
 
+  // Check which payment method is selected
   const paymentMethodInput = document.querySelector(
     'input[name="payment"]:checked',
   );
   const paymentMethod = paymentMethodInput ? paymentMethodInput.value : "card";
 
+  // If they chose card, make sure they filled card details
   if (paymentMethod === "card") {
     const cardFields = ["cardNumber", "expiry", "cvv", "cardName"];
     for (let f of cardFields) {
       const el = document.getElementById(f);
       if (!el || !el.value.trim()) {
-        showToast(
-          `Please enter your ${f.replace(/([A-Z])/g, " $1").toLowerCase()} 🌷`,
-          "error"
+        alert(
+          `Please enter your ${f.replace(/([A-Z])/g, " $1").toLowerCase()} `,
         );
         return false;
       }
@@ -162,7 +185,7 @@ function validateForm() {
   return true;
 }
 
-// COMMAND: createOrder - Place single product order
+// Function to place a single order for just one product
 async function createOrder() {
   try {
     const response = await fetch(`${ORDER_API_URL}/`, {
@@ -174,32 +197,33 @@ async function createOrder() {
       body: JSON.stringify({
         product_id: selectedProduct.id,
         quantity: selectedProduct.quantity,
-        size: selectedProduct.selectedSize || "Regular"
+        size: selectedProduct.selectedSize || "Regular",
       }),
     });
 
     if (!response.ok) throw new Error("Order creation failed");
     const order = await response.json();
+    // After creating the order, process the payment for it
     await processPayment(order.id);
   } catch (error) {
-    console.error("Order Error:", error);
-    showToast("Failed to place order. " + error.message, "error");
+    alert("Failed to place order. " + error.message);
   }
 }
 
-// COMMAND: createCartOrder - Loop and place all cart orders
+// Function to turn every item in the cart into a real order
 async function createCartOrder() {
   try {
-    const res = await fetch(`${window.API_BASE_URL}/cart/`, {
+    const res = await fetch(`https://bloomher-backend.onrender.com/cart/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const items = await res.json();
 
     if (items.length === 0) {
-      showToast("Your cart is empty!", "info");
+      alert("Your cart is empty!");
       return;
     }
 
+    // Create a request for each item at once
     const orderPromises = items.map((item) => {
       return fetch(`${ORDER_API_URL}/`, {
         method: "POST",
@@ -210,30 +234,33 @@ async function createCartOrder() {
         body: JSON.stringify({
           product_id: item.product_id,
           quantity: item.quantity,
-          size: item.size || "Regular"
+          size: item.size || "Regular",
         }),
       }).then((r) => r.json());
     });
 
+    // Wait for all items to be ordered
     const orders = await Promise.all(orderPromises);
 
+    // Process payment for each new order
     for (const order of orders) {
       await processPayment(order.id, true);
     }
 
     const orderIds = orders.map((o) => o.id).join(",");
-    showToast("Order placed successfully! ", "success");
+    alert("Order placed successfully! ");
+    // Clear the memory of these items since they are now bought
     localStorage.removeItem("selectedProduct");
     localStorage.removeItem("checkoutMode");
     localStorage.removeItem("cartTotal");
+    // Go to tracking page
     window.location.href = `./tracking.html?order_id=${orderIds}`;
   } catch (err) {
-    console.error(err);
-    showToast("Error processing cart order: " + err.message, "error");
+    alert("Error processing cart order: " + err.message);
   }
 }
 
-// COMMAND: processPayment - Handle API payment transaction
+// Function that tells the server we are paying for our order
 async function processPayment(orderId, silent = false) {
   const paymentMethodInput = document.querySelector(
     'input[name="payment"]:checked',
@@ -252,20 +279,18 @@ async function processPayment(orderId, silent = false) {
 
     if (!res.ok) throw new Error("Payment failed");
 
+    // If this is the final item, show success and redirect
     if (!silent) {
-      showToast("Order placed successfully! ", "success");
+      alert("Order placed successfully! ");
       localStorage.removeItem("selectedProduct");
       localStorage.removeItem("checkoutMode");
       localStorage.removeItem("cartTotal");
       window.location.href = `./tracking.html?order_id=${orderId}`;
     }
   } catch (err) {
-    console.error("Payment Error:", err);
-    if (!silent) showToast("Payment processing failed.", "error");
+    if (!silent) alert("Payment processing failed.");
   }
 }
 
-init();
-
-// Start
+// Run the setup function
 init();
